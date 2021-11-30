@@ -1,5 +1,7 @@
 package class01;
 
+import jdk.nashorn.internal.ir.ReturnNode;
+
 import java.util.*;
 
 /**
@@ -10,8 +12,8 @@ import java.util.*;
  */
 public class MonotonousStack {
     public static void main(String[] args) {
-        int[] arr = new int[]{3, 2, 4, 1, 5};
-        System.out.println(Arrays.deepToString(getNearLessNoRepeat(arr)));
+        int[] arr = new int[]{1, 3, 3, 2, 1, 5};
+        System.out.println(Arrays.deepToString(getNearLessRepeat(arr)));
     }
 
     /*
@@ -51,66 +53,36 @@ public class MonotonousStack {
 
     public static int[][] getNearLessRepeat(int[] arr) {
         int[][] answer = new int[arr.length][2];
-        Stack<Integer> stack = new Stack<>();
-        //这里就是压入的集合 用Map映射
-        Map<Integer, TreeSet<Integer>> map = new HashMap<>();
+        //单调栈
+        Stack<List<Integer>> stack = new Stack<>();
         for (int i = 0; i < arr.length; i++) {
-            if (stack.isEmpty() || arr[stack.peek()] <= arr[i]) {
-                if (!map.containsKey(i)) {
-                    TreeSet<Integer> list = new TreeSet<>();
-                    list.add(i);
-                    map.put(i, list);
-                } else {
-                    map.get(i).add(i);
-                }
-                stack.add(i);
-                continue;
-            }
-            while (!stack.isEmpty() && arr[stack.peek()] > arr[i]) {
-                Integer releaseIndex = stack.pop();
-                answer[releaseIndex][1] = i;
-                int nextStack = stack.isEmpty() ? -1 : stack.peek();
-                if (nextStack == -1) {
-                    answer[releaseIndex][0] = -1;
-                } else {
-                    answer[releaseIndex][0] = -1;
-                    TreeSet<Integer> list = map.get(nextStack);
-                    Iterator<Integer> iterator = list.iterator();
-                    while (iterator.hasNext()) {
-                        Integer next = iterator.next();
-                        answer[releaseIndex][0] = next;
-                        iterator.remove();
-                        continue;
-                    }
+            while (!stack.isEmpty() && arr[stack.peek().get(0)] > arr[i]) {
+                List<Integer> popList = stack.pop();
+                //判断当前弹出的元素往下是否还有元素 没有就返回-1 如果有取那个list的最后一个坐标
+                int lessLeftIndex = stack.isEmpty() ? -1 : stack.peek().get(stack.peek().size() - 1);
+                for (Integer pop : popList) {
+                    answer[pop][1] = i;
+                    answer[pop][0] = lessLeftIndex;
                 }
             }
-            if (!map.containsKey(i)) {
-                TreeSet<Integer> list = new TreeSet<>();
-                list.add(i);
-                map.put(i, list);
+            if (!stack.isEmpty() && arr[stack.peek().get(0)] == arr[i]) {
+                stack.peek().add(i);
             } else {
-                map.get(i).add(i);
+                List<Integer> list = new ArrayList<>();
+                list.add(i);
+                stack.push(list);
             }
-            stack.add(i);
         }
         while (!stack.isEmpty()) {
-            Integer releaseIndex = stack.pop();
-            if (map.containsKey(releaseIndex)) {
-                TreeSet<Integer> list = map.get(releaseIndex);
-                Iterator<Integer> iterator = list.iterator();
-                while (iterator.hasNext()) {
-                    Integer cur = iterator.next();
-                    answer[cur][1] = -1;
-                    iterator.remove();
-                    if (!iterator.hasNext()) {
-                        answer[cur][1] = -1;
-                        continue;
-                    }
-                    int next = iterator.next();
-                    answer[cur][0] = next;
-                }
+            List<Integer> popList = stack.pop();
+            int lessLeftIndex = stack.isEmpty() ? -1 : stack.peek().get(stack.peek().size() - 1);
+            for (Integer pop : popList) {
+                answer[pop][1] = -1;
+                answer[pop][0] = lessLeftIndex;
             }
         }
         return answer;
     }
+
+
 }
